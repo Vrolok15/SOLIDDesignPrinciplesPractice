@@ -8,138 +8,86 @@ using System.Threading.Tasks;
 
 namespace SOLIDDesignPrinciplesPractice
 {
-    public class Document
+    public enum Relationship
     {
-        
+        Parent, Child, Sibling, Spouse
     }
 
-    // WRONG way to build interfaces!
-    // One BIG inteface for every type of printer and scanner...
-    public interface IMachine
+    public class Person
     {
-        void Print(Document d);
-        void Scan(Document d);
-        void Copy(Document d);
-        void Fax(Document d);
+        public string Name;
     }
 
-    public class MultiFunctionPrinter : IMachine
+    //Example of Good practice: create an interface access low level code
+    public interface IRelationshipBrowser
     {
-        public void Print(Document d)
-        {
-            //Print
-        }
-        public void Scan(Document d)
-        {
-            //Scan
-        }
-        public void Copy(Document d)
-        {
-            //Copy
-        }
-        public void Fax(Document d)
-        {
-            //Fax
-        }
+        IEnumerable<Person> FindAllChildrenOf(string name);
     }
 
-    // Have to implement useless methods!
-    public class ClassicPrinter : IMachine
+    //Low Level
+    public class Relationships : IRelationshipBrowser
     {
-        public void Print(Document d)
+        //First need to nuget: Install-Package "System.ValueTuple"
+        private List<(Person, Relationship, Person)> relations
+            = new List<(Person, Relationship, Person)>();
+
+        public void AddParentAndChild(Person parent, Person child)
         {
-            //Print
-        }
-        public void Scan(Document d)
-        {
-            //CAN'T Scan!
-        }
-        public void Copy(Document d)
-        {
-            //CAN'T Copy!
-        }
-        public void Fax(Document d)
-        {
-            //CAN'T Fax!
+            relations.Add((parent, Relationship.Parent, child));
+            relations.Add((child, Relationship.Child, parent));
         }
 
+        public IEnumerable<Person> FindAllChildrenOf(string name)
+        {
+            return relations.Where(
+                x => x.Item1.Name == name &&
+                     x.Item2 == Relationship.Parent
+            ).Select(r => r.Item3);
+        }
+
+        //Example of bad practice: special List that makes private property private
+
+        // public List<(Person, Relationship, Person)> Relations => relations;
     }
 
-    // Correct way to build interfaces :D
-    // Many intefaces for every function!
-    public interface IPrinter
+    //High Level
+    class Research
     {
-        void Print(Document d);
-    }
+        //Example of bad practice: accessing low level code through special List inside of it
 
-    public interface IScanner
-    {
-        void Scan(Document d);
-    }
+        //public Research(Relationships relationships)
+        //{
+        //    var relations = relationships.Relations;
+        //    foreach (var r in relations.Where(
+        //        x => x.Item1.Name == "Francis" && 
+        //        x.Item2 == Relationship.Parent
+        //        ))
+        //    {
+        //        Console.WriteLine($"Francis has a child called {r.Item3.Name}");
+        //    }
+        //}
 
-    public interface ICopier
-    {
-        void Copy(Document d);
-    }
-
-    public interface IFaxMachine
-    {
-        void Fax(Document d);
-    }
-
-    //Another old school printer
-    public class AnotherClassicPrinter : IPrinter
-    {
-        public void Print(Document d)
+        //Example of Good practice: depend on the interface, not the low level method
+        public Research(IRelationshipBrowser browser)
         {
-            //Print
+            foreach (var p in browser.FindAllChildrenOf("Francis"))
+            {
+                Console.WriteLine($"Francis has a child called {p.Name}");
+            }
         }
-    }
 
-    //Printer + Fax
-    public class FaxAndPrinter : IPrinter, IFaxMachine
-    {
-        public void Print(Document d)
-        {
-            //Print
-        }
-        public void Fax(Document d)
-        {
-            //Fax
-        }
-    }
-
-    //Can also implement new interfaces from smaller interfaces! 
-    public interface IMultiFunctionMachine : IPrinter, IScanner, ICopier, IFaxMachine
-    {
-
-    }
-
-    //Another cool modern printer
-    public class AnotherMultiFunctionPrinter : IMultiFunctionMachine
-    {
-        public void Print(Document d)
-        {
-            //Print
-        }
-        public void Scan(Document d)
-        {
-            //Scan
-        }
-        public void Copy(Document d)
-        {
-            //Copy
-        }
-        public void Fax(Document d)
-        {
-            //Fax
-        }
-    }
-
-    class Program
-    {
         static void Main(string[] args)
         {
+            var parent = new Person {Name = "Francis"};
+            var child1 = new Person {Name = "Zoe" };
+            var child2 = new Person {Name = "Louis" };
+
+            var relationships = new Relationships();
+            relationships.AddParentAndChild(parent, child1);
+            relationships.AddParentAndChild(parent, child2);
+
+            new Research(relationships);
+            Console.ReadLine();
         }
     }
 }
