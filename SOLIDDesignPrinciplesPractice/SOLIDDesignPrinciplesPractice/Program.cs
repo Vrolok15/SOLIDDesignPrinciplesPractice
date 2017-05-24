@@ -8,62 +8,138 @@ using System.Threading.Tasks;
 
 namespace SOLIDDesignPrinciplesPractice
 {
-    // Liskov substitution principle
-
-    public class Rectangle
+    public class Document
     {
-        //Use virtual properties!
-        public virtual int Width { get; set; }
-        public virtual int Height { get; set; }
+        
+    }
 
-        public Rectangle()
+    // WRONG way to build interfaces!
+    // One BIG inteface for every type of printer and scanner...
+    public interface IMachine
+    {
+        void Print(Document d);
+        void Scan(Document d);
+        void Copy(Document d);
+        void Fax(Document d);
+    }
+
+    public class MultiFunctionPrinter : IMachine
+    {
+        public void Print(Document d)
         {
-            
+            //Print
         }
-
-        public Rectangle(int width, int height)
+        public void Scan(Document d)
         {
-            Width = width;
-            Height = height;
+            //Scan
         }
-
-        public override string ToString()
+        public void Copy(Document d)
         {
-            return $"{nameof(Width)}: {Width}, {nameof(Height)}: {Height}";
+            //Copy
+        }
+        public void Fax(Document d)
+        {
+            //Fax
         }
     }
 
-
-    public class Square : Rectangle
+    // Have to implement useless methods!
+    public class ClassicPrinter : IMachine
     {
-        //Use override!
-        public override int Width
+        public void Print(Document d)
         {
-            set { base.Width = base.Height = value;  }
+            //Print
+        }
+        public void Scan(Document d)
+        {
+            //CAN'T Scan!
+        }
+        public void Copy(Document d)
+        {
+            //CAN'T Copy!
+        }
+        public void Fax(Document d)
+        {
+            //CAN'T Fax!
         }
 
-        public override int Height
+    }
+
+    // Correct way to build interfaces :D
+    // Many intefaces for every function!
+    public interface IPrinter
+    {
+        void Print(Document d);
+    }
+
+    public interface IScanner
+    {
+        void Scan(Document d);
+    }
+
+    public interface ICopier
+    {
+        void Copy(Document d);
+    }
+
+    public interface IFaxMachine
+    {
+        void Fax(Document d);
+    }
+
+    //Another old school printer
+    public class AnotherClassicPrinter : IPrinter
+    {
+        public void Print(Document d)
         {
-            set { base.Width = base.Height = value; }
+            //Print
+        }
+    }
+
+    //Printer + Fax
+    public class FaxAndPrinter : IPrinter, IFaxMachine
+    {
+        public void Print(Document d)
+        {
+            //Print
+        }
+        public void Fax(Document d)
+        {
+            //Fax
+        }
+    }
+
+    //Can also implement new interfaces from smaller interfaces! 
+    public interface IMultiFunctionMachine : IPrinter, IScanner, ICopier, IFaxMachine
+    {
+
+    }
+
+    //Another cool modern printer
+    public class AnotherMultiFunctionPrinter : IMultiFunctionMachine
+    {
+        public void Print(Document d)
+        {
+            //Print
+        }
+        public void Scan(Document d)
+        {
+            //Scan
+        }
+        public void Copy(Document d)
+        {
+            //Copy
+        }
+        public void Fax(Document d)
+        {
+            //Fax
         }
     }
 
     class Program
     {
-        public static int Area(Rectangle r) => r.Width * r.Height;
-
         static void Main(string[] args)
         {
-            Rectangle rc = new Rectangle(4, 6);
-            Console.WriteLine($"{rc} has area of {Area(rc)}");
-
-            // Objects in a program should be replaceable with instances of their subtypes 
-            // without altering the correctness of that program!
-            Rectangle sq = new Square();
-            sq.Width = 4;
-            Console.WriteLine($"{sq} has area of {Area(rc)}");
-
-            Console.ReadLine();
         }
     }
 }
